@@ -24,9 +24,11 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.ATIVA_BLUETOOTH
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.ATIVA_DESCOBERTA_BLUETOOTH
+import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.CLIENTE_CODE
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.MENSAGEM_DESCONEXAO
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.MENSAGEM_TEXTO
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.REQUER_PERMISSOES_LOCALIZACAO
+import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.SERVIDOR_CODE
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.TEMPO_DESCOBERTA_SERVICO_BLUETOOTH
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.adaptadorBt
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.outputStream
@@ -71,6 +73,28 @@ class  MainActivity : AppCompatActivity() {
                 (ActivityCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION) != PermissionChecker.PERMISSION_GRANTED)) {
                    ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION),REQUER_PERMISSOES_LOCALIZACAO)
                }
+        }
+
+        // Verificando Modo como o dispositivo ira atuar
+        val MODO = intent.action
+
+        if (MODO == SERVIDOR_CODE) {
+            toast("Configurando modo servidor")
+
+            val descobertaIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+            descobertaIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,TEMPO_DESCOBERTA_SERVICO_BLUETOOTH)
+            startActivityForResult(descobertaIntent,ATIVA_DESCOBERTA_BLUETOOTH)
+
+        } else {
+            if (MODO == CLIENTE_CODE) {
+                toast("Configurando modo cliente")
+
+                // (Re)Inicializando a Lista de dispositivos encontrados
+                listaBtsEncontrados = mutableListOf()
+                registraReceiver()
+                adaptadorBt?.startDiscovery()
+                exibirAguardeDialog("Procurando dispositivos Bluetooth", 0)
+            }
         }
     }
 
@@ -118,39 +142,6 @@ class  MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_modo_aplicativo,menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        var retorno = false
-        when (item?.itemId) {
-            R.id.modoClienteMenuItem -> {
-                toast("Configurando modo cliente")
-
-                // (Re)Inicializando a Lista de dispositivos encontrados
-                listaBtsEncontrados = mutableListOf()
-
-                registraReceiver()
-
-                adaptadorBt?.startDiscovery()
-
-                exibirAguardeDialog("Procurando dispositivos Bluetooth", 0)
-                retorno = true
-            }
-            R.id.modoServidorMenuItem -> {
-                toast("Configurando modo servidor")
-
-                val descobertaIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
-                descobertaIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,TEMPO_DESCOBERTA_SERVICO_BLUETOOTH)
-                startActivityForResult(descobertaIntent,ATIVA_DESCOBERTA_BLUETOOTH)
-                retorno = true
-            }
-        }
-        return retorno
     }
 
     private fun registraReceiver() {
