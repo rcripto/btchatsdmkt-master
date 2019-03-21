@@ -5,6 +5,7 @@ import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.MENSAGEM_DESCON
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.MENSAGEM_TEXTO
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.inputStream
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.outputStream
+import org.json.JSONObject
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
@@ -20,12 +21,19 @@ class ThreadComunicacao(val mainActivity: MainActivity) : Thread() {
             inputStream = DataInputStream(socket!!.inputStream)
             outputStream = DataOutputStream(socket!!.outputStream)
             // Lendo mensagens e escrevendo na Tela Principal
-            var mensagem: String?
+            var retorno: String?
             while (true) {
                 // Lê o InputStream e armazena numa String
-                mensagem = inputStream?.readUTF()
+                retorno = inputStream?.readUTF()
+
+                val jsonRetorno = JSONObject("${retorno}")
+
+                if (jsonRetorno.get("remetente") != "null") {
+                    nome = jsonRetorno.get("remetente").toString()
+                }
+
                 // Aciona o Handler da Tela Principal para mostrar a String recebida no ListView
-                mainActivity.mHandler?.obtainMessage(MENSAGEM_TEXTO, nome + ": " + mensagem)?.sendToTarget()
+                mainActivity.mHandler?.obtainMessage(MENSAGEM_TEXTO, "${nome}" + ": " + "${jsonRetorno.get("mensagem")}")?.sendToTarget()
             }
         } catch (e: IOException) {
             /* Em caso de desconexão pede para o Handler da tela principal mostrar um Toast para o

@@ -17,10 +17,12 @@ import android.os.Handler
 import android.os.Message
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.PermissionChecker
+import android.text.InputType
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.Toast
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.ATIVA_BLUETOOTH
 import br.edu.ifsp.scl.btchatsdmkt.BluetoothSingleton.Constantes.ATIVA_DESCOBERTA_BLUETOOTH
@@ -55,6 +57,8 @@ class  MainActivity : AppCompatActivity() {
 
     // Dialog para aguardar conexões e busca
     private var aguardeDialog: ProgressDialog? = null
+
+    var nomeDoUsuario: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,6 +146,43 @@ class  MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.edit_user_name,menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+
+        val alerta = AlertDialog.Builder(this)
+        var entradaNome : EditText?=null
+
+        with(alerta) {
+            setTitle("Entre com o nome do usuário:")
+            var nome = entradaNome?.text.toString()
+
+            entradaNome = EditText(context)
+            entradaNome!!.inputType = InputType.TYPE_CLASS_TEXT
+
+            setPositiveButton("Salvar") {
+                    dialog, which ->
+                dialog.dismiss()
+
+                nomeDoUsuario = entradaNome!!.text.toString()
+            }
+
+            setNegativeButton("Cancelar") {
+                    dialog, which ->
+                dialog.dismiss()
+            }
+        }
+
+        val dialog = alerta.create()
+        dialog.setView(entradaNome)
+        dialog.show()
+
+        return true
     }
 
     private fun registraReceiver() {
@@ -245,9 +286,10 @@ class  MainActivity : AppCompatActivity() {
 
             try {
                 if (outputStream != null) {
-                    outputStream?.writeUTF(mensagem)
+                    val mensagemComRemetente: String = "{\"remetente\":\"${nomeDoUsuario}\", \"mensagem\":${mensagem}}"
+                    outputStream?.writeUTF(mensagemComRemetente)
 
-                    historicoAdapter?.add("Eu: ${mensagem}")
+                    historicoAdapter?.add( if (nomeDoUsuario == null) "Eu: ${mensagem}" else "${nomeDoUsuario}: ${mensagem}")
                     historicoAdapter?.notifyDataSetChanged()
                 }
             } catch (e: IOException) {
